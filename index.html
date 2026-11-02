@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Monthly Spend Dashboard</title>
+<style>
+:root{--bg:#0b1020;--panel:#151f34;--line:#293750;--muted:#91a0b9;--text:#eef3ff;--green:#55d6a2;--red:#ff7d88;--blue:#7ea7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% -10%,#1b2b4c,transparent 38%),var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:28px 18px 50px}.eyebrow{color:var(--green);font-size:11px;letter-spacing:.15em;font-weight:800}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}h1{font-size:34px;letter-spacing:-1px;margin:3px 0}h2{font-size:15px;margin:0 0 5px}.muted,.hint{color:var(--muted)}.muted{font-size:12px}
+.panel,.metric{border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#172239,#101829)}
+.upload{padding:22px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.upload p{margin:4px 0 0;color:var(--muted);font-size:12px}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+button,.filelabel,input,select{background:#111b2e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit}
+button,.filelabel{cursor:pointer}.filelabel{display:inline-block}.filelabel input{display:none}
+button.primary{background:#263b60;border-color:#47689e}.status{font-size:12px;color:var(--muted);margin-top:10px}.status.error{color:#ff9ba3}.status.ok{color:var(--green)}
+.notice{background:#302719;border:1px solid #66543a;color:#f1d49c;border-radius:10px;padding:10px 13px;font-size:11px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.metric{padding:16px}.metric .value{font-size:26px;font-weight:750;margin:7px 0}.hint{font-size:11px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}.chart{padding:17px}.bars{display:grid;gap:12px;margin-top:15px}.barhead{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:5px}.track{height:8px;background:#293750;border-radius:9px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#7ea7ff,#55d6a2)}
+.mix{display:flex;align-items:center;gap:18px;min-height:205px}.donut{width:155px;height:155px;border-radius:50%;position:relative;flex:none}.donut:after{content:"";position:absolute;inset:25px;background:#141e32;border-radius:50%}.donutcenter{position:absolute;inset:0;display:grid;place-content:center;text-align:center;z-index:1}.donutcenter b{font-size:17px}.donutcenter small{font-size:10px;color:var(--muted)}.legend{display:grid;gap:7px;font-size:11px}.leg{display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:3px;flex:none}
+.trendpanel{padding:17px;margin-bottom:14px}.trend{height:125px;display:flex;align-items:end;gap:4px;margin-top:12px}.day{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:4px;min-width:0}.db{width:100%;max-width:24px;background:linear-gradient(#7ea7ff,#55d6a2);border-radius:4px 4px 0 0;min-height:2px}.day label{font-size:9px;color:var(--muted)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 10px}.filters{display:flex;gap:7px;flex-wrap:wrap}.filters input{min-width:190px}
+.table{overflow:hidden}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;min-width:730px}th{text-align:left;background:#111a2b;color:var(--muted);font-size:10px;text-transform:uppercase;padding:12px}td{padding:11px 12px;border-top:1px solid var(--line);font-size:12px}tbody tr:hover{background:#1a2941}.merchant{font-weight:650}.tiny{font-size:10px;color:var(--muted)}.amount{text-align:right;font-weight:700;white-space:nowrap}.catselect{font-size:11px;padding:6px;max-width:185px}.empty{text-align:center;padding:32px;color:var(--muted)}.hidden{display:none}.foot{text-align:center;color:#71819c;font-size:11px;margin-top:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}header{display:block}h1{font-size:29px}.mix{gap:12px}.donut{width:135px;height:135px}}
+@media(max-width:430px){.wrap{padding:18px 11px 35px}.metric{padding:12px}.metric .value{font-size:21px}.upload{padding:15px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header><div><div class="eyebrow">PERSONAL FINANCE · MONTHLY REVIEW</div><h1 id="title">Monthly spend<span style="color:var(--green)">.</span></h1><div class="muted" id="period">Upload a Google Pay transaction statement PDF to begin</div></div><div class="muted" id="txmeta">No statement loaded</div></header>
+<section class="panel upload">
+  <div><h2>Import Google Pay statement</h2><p>Choose the monthly PDF statement. It is parsed locally in your browser; no file is uploaded to a server.</p><div id="status" class="status">Supported: Google Pay transaction statement PDFs with selectable text.</div></div>
+  <div class="actions"><label class="filelabel primary">Choose PDF<input id="pdf" type="file" accept="application/pdf"></label><button id="csv" disabled>Export CSV ↓</button></div>
+</section>
+<div class="notice">Privacy: the PDF is processed on this device. Category edits are saved in this browser only. Avoid publishing the dashboard or exported CSV because they contain private transaction details.</div>
+<section class="grid">
+ <div class="metric"><div class="muted">Total expenses</div><div class="value" id="spent">—</div><div class="hint">Self-transfers excluded</div></div>
+ <div class="metric"><div class="muted">Money received</div><div class="value" id="income" style="color:var(--green)">—</div><div class="hint">Incoming UPI transactions</div></div>
+ <div class="metric"><div class="muted">Net outflow</div><div class="value" id="net" style="color:var(--red)">—</div><div class="hint">Expenses minus received</div></div>
+ <div class="metric"><div class="muted">Average daily spend</div><div class="value" id="avg">—</div><div class="hint" id="avgsub">Across the month</div></div>
+</section>
+<section class="two">
+ <div class="panel chart"><h2>Spending by category</h2><div class="muted">Expenses only · change a category in the table</div><div class="bars" id="bars"><div class="muted">Your category breakdown will appear here.</div></div></div>
+ <div class="panel chart"><h2>Expense mix</h2><div class="muted">Share of total outgoing payments</div><div class="mix"><div class="donut" id="donut"><div class="donutcenter"><b>—</b><small>total spent</small></div></div><div class="legend" id="legend"></div></div></div>
+</section>
+<section class="panel trendpanel"><h2>Daily spending</h2><div class="muted">Outgoing payments by transaction date</div><div class="trend" id="trend"></div></section>
+<div class="toolbar"><div><h2>Transactions</h2><div class="muted" id="count">No transactions loaded</div></div><div class="filters"><input id="search" placeholder="Search merchant…"><select id="type"><option value="all">All transactions</option><option value="expense">Expenses</option><option value="income">Money received</option><option value="self">Self transfers</option></select><select id="category"><option value="all">All categories</option></select><button id="reset">Reset</button></div></div>
+<section class="panel table"><div class="scroll"><table><thead><tr><th>Date</th><th>Merchant / details</th><th>Category</th><th style="text-align:right">Amount</th></tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty">Upload a PDF to see transactions.</div></div></section>
+<div class="foot">Google Pay PDF parser · INR · Self-transfers excluded from expense totals</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const $=id=>document.getElementById(id);
+const palette=['#8293ad','#7ea7ff','#55d6a2','#b59aff','#f4c66b','#e89bc4','#9ba9bc','#ff967c','#c5a0ff','#73c8d8','#8ccf9e'];
+const categories=['Transfers / uncategorised','Groceries & shopping','Transport & vehicle','Investments','Food & dining','Bills & subscriptions','Bank / financial','Medical','Entertainment','Gifts / donation / personal','Income','Self transfer'];
+let transactions=[],monthLabel='',year=0,daysInMonth=30;
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sum=a=>a.reduce((s,x)=>s+x.amount,0);
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function guessCategory(name,type){
+ if(type==='income')return 'Income';
+ if(type==='self')return 'Self transfer';
+ const n=name.toLowerCase();
+ if(/self transfer/.test(n))return 'Self transfer';
+ if(/blinkit|zepto|instamart|bigbasket|kirana|general store|ganral stor|fruit shop|v-?mart|mart|supermarket|grocery|trading company|meesho|westside/.test(n))return 'Groceries & shopping';
+ if(/rapido|uber|ola|petrol|filling centre|fuel|parking|auto service|bike service/.test(n))return 'Transport & vehicle';
+ if(/mutual fund|iccl|groww|zerodha|coin by/.test(n))return 'Investments';
+ if(/zomato|swiggy|bundl technologies|restaurant|cafe|hotel|dhaba|kababi|roll corner|food|dining|pizza|domino|mcdonald|chai|tea|bakery|chat$|pan bhandar|lassi|tunday|burger singh|district dining|clean bowled/.test(n))return 'Food & dining';
+ if(/recharge|airtel|jio|electricity|power|pspcl|broadband|gas|bill|subscription|google play|netflix|prime video/.test(n))return 'Bills & subscriptions';
+ if(/bank|axis bank|icici|sbi|hdfc|finance|loan|credit card/.test(n))return 'Bank / financial';
+ if(/medical|pharmacy|chemist|hospital|clinic|apollo|medicine|health/.test(n))return 'Medical';
+ if(/pvr|inox|movie|cinema|bookmyshow|game/.test(n))return 'Entertainment';
+ if(/trust|donation|flower|gift/.test(n))return 'Gifts / donation / personal';
+ return 'Transfers / uncategorised';
+}
+function parseStatement(text){
+ // PDF.js preserves the statement's reading order. Join text runs before matching
+ // because dates, merchant names, amounts, time and UPI IDs may be separate PDF runs.
+ const flat=text.replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\s+/g,' ').trim();
+ const startRe=/(\d{1,2}\s+[A-Za-z]{3},?\s+\d{4})\s+(Self transfer to|Paid to|Received from)\s+/gi;
+ const starts=[...flat.matchAll(startRe)];
+ if(!starts.length)throw new Error('No Google Pay transactions found. Make sure this is a text-based Google Pay transaction statement PDF.');
+ const out=[];
+ for(let i=0;i<starts.length;i++){
+  const m=starts[i],end=i+1<starts.length?starts[i+1].index:flat.length;
+  const chunk=flat.slice(m.index,end);
+  const amountMatch=chunk.match(/₹\s*([\d,]+(?:\.\d{1,2})?)/);
+  if(!amountMatch)continue;
+  // `chunk` starts at this transaction, so use offsets relative to the chunk.
+  // The previous code accidentally added the document-wide match offset here;
+  // that shifted the merchant slice and caused most names to become blank/garbled.
+  const afterPrefix=chunk.slice(m[0].length);
+  const amountPos=afterPrefix.indexOf(amountMatch[0]);
+  const merchant=afterPrefix.slice(0,amountPos).trim().replace(/\s+/g,' ');
+  const dateMatch=m[1].match(/(\d{1,2})\s+([A-Za-z]{3}),?\s+(\d{4})/);
+  const timeMatch=chunk.match(/\b(\d{1,2}:\d{2}\s*[AP]M)\b/i);
+  const idMatch=chunk.match(/UPI Transaction ID:\s*(\d+)/i);
+  const kind=m[2]==='Received from'?'income':m[2]==='Self transfer to'?'self':'expense';
+  const amount=Number(amountMatch[1].replace(/,/g,''));
+  const date=`${dateMatch[3]}-${({Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'})[dateMatch[2]]}-${dateMatch[1]}`;
+  const cleanMerchant=merchant.replace(/\s+/g,' ').trim();
+  out.push({date,day:Number(dateMatch[1]),time:timeMatch?.[1]||'',merchant:cleanMerchant,amount,type:kind,category:guessCategory(cleanMerchant,kind),upi:idMatch?.[1]||''});
+ }
+ if(!out.length)throw new Error('The PDF was read, but no transaction rows could be parsed.');
+ return out;
+}
+async function readPdf(file){
+ $('status').className='status';$('status').textContent='Reading PDF…';
+ const data=await file.arrayBuffer(),pdf=await pdfjsLib.getDocument({data}).promise;
+ let all='';
+ for(let p=1;p<=pdf.numPages;p++){
+  $('status').textContent=`Reading page ${p} of ${pdf.numPages}…`;
+  const page=await pdf.getPage(p),content=await page.getTextContent();
+  // Rebuild visual text lines from PDF coordinates. Google Pay often stores
+  // the date, description and amount as separate positioned text fragments.
+  const items=content.items.filter(x=>x.str&&x.str.trim()).map(x=>({
+   str:x.str.trim(),x:x.transform?.[4]??0,y:x.transform?.[5]??0
+  })).sort((a,b)=>Math.abs(b.y-a.y)>2?b.y-a.y:a.x-b.x);
+  const lines=[];
+  for(const item of items){
+   let line=lines.findLast?.(v=>Math.abs(v.y-item.y)<=2);
+   if(!line){line={y:item.y,parts:[]};lines.push(line);}
+   line.parts.push(item);
+  }
+  lines.sort((a,b)=>b.y-a.y);
+  all+=' '+lines.map(line=>line.parts.sort((a,b)=>a.x-b.x).map(v=>v.str).join(' ')).join('\n');
+ }
+ return parseStatement(all);
+}
+function draw(){
+ const expenses=transactions.filter(x=>x.type==='expense'),income=transactions.filter(x=>x.type==='income');
+ const spend=sum(expenses),received=sum(income),net=spend-received;
+ $('spent').textContent=money(spend);$('income').textContent=money(received);$('net').textContent=money(net);
+ $('avg').textContent=money(spend/daysInMonth);$('avgsub').textContent=`Across ${daysInMonth} calendar days`;
+ const groups={};expenses.forEach(x=>groups[x.category]=(groups[x.category]||0)+x.amount);
+ const sorted=Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+ $('bars').innerHTML=sorted.length?sorted.map(([c,v],i)=>`<div><div class="barhead"><span>${escapeHtml(c)}</span><span>${money(v)} · ${(v/(spend||1)*100).toFixed(1)}%</span></div><div class="track"><div class="fill" style="width:${v/(spend||1)*100}%;background:${palette[categories.indexOf(c)%palette.length]}"></div></div></div>`).join(''):'<div class="muted">No outgoing payments found.</div>';
+ let offset=0;const stops=sorted.map(([c,v],i)=>{const a=offset;offset+=v/(spend||1)*100;return `${palette[categories.indexOf(c)%palette.length]} ${a}% ${offset}%`});
+ $('donut').style.background=sorted.length?`conic-gradient(${stops.join(',')})`:'#293750';
+ $('donut').querySelector('b').textContent=money(spend);
+ $('legend').innerHTML=sorted.slice(0,8).map(([c,v])=>`<div class="leg"><i class="dot" style="background:${palette[categories.indexOf(c)%palette.length]}"></i>${escapeHtml(c)} · ${(v/(spend||1)*100).toFixed(0)}%</div>`).join('');
+ const daily=Array(daysInMonth).fill(0);expenses.forEach(x=>daily[x.day-1]+=x.amount);const max=Math.max(...daily,1);
+ $('trend').innerHTML=daily.map((v,i)=>`<div class="day" title="${i+1}: ${money(v)}"><div class="db" style="height:${Math.max(2,v/max*100)}%"></div><label>${i+1}</label></div>`).join('');
+ $('category').innerHTML='<option value="all">All categories</option>'+categories.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
+ $('txmeta').textContent=`${transactions.length} transactions · INR ₹`;
+ $('csv').disabled=false;renderRows();
+}
+function renderRows(){
+ const q=$('search').value.toLowerCase(),type=$('type').value,cat=$('category').value;
+ const list=transactions.filter(x=>(type==='all'||x.type===type)&&(cat==='all'||x.category===cat)&&`${x.merchant} ${x.date} ${x.upi}`.toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+ $('count').textContent=`Showing ${list.length} of ${transactions.length} transactions`;
+ $('rows').innerHTML=list.map(x=>{const index=transactions.indexOf(x);return `<tr><td>${x.day} ${monthLabel}<div class="tiny">${escapeHtml(x.time)}</div></td><td><div class="merchant">${escapeHtml(x.merchant)}</div><div class="tiny">UPI · ${escapeHtml(x.upi||'ID unavailable')}</div></td><td><select class="catselect" data-index="${index}">${categories.map(c=>`<option ${x.category===c?'selected':''}>${escapeHtml(c)}</option>`).join('')}</select></td><td class="amount" style="color:${x.type==='income'?'var(--green)':x.type==='self'?'var(--muted)':'var(--text)'}">${x.type==='income'?'+':x.type==='self'?'↔':'−'}${money(x.amount)}</td></tr>`}).join('');
+ $('empty').classList.toggle('hidden',list.length>0);
+ document.querySelectorAll('.catselect').forEach(el=>el.addEventListener('change',e=>{transactions[Number(e.target.dataset.index)].category=e.target.value;draw()}));
+}
+$('pdf').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ try{
+  transactions=await readPdf(file);
+  const dates=transactions.map(x=>x.date).sort(),first=new Date(dates[0]+'T00:00:00'),last=new Date(dates[dates.length-1]+'T00:00:00');
+  if(first.getMonth()!==last.getMonth()||first.getFullYear()!==last.getFullYear())throw new Error('This PDF contains transactions from more than one month. Please upload a single-month statement.');
+  year=first.getFullYear();monthLabel=first.toLocaleString('en-IN',{month:'short'});daysInMonth=new Date(year,first.getMonth()+1,0).getDate();
+  $('title').innerHTML=`${first.toLocaleString('en-IN',{month:'long'})} ${year} spend<span style="color:var(--green)">.</span>`;
+  $('period').textContent=`${first.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} — ${last.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} · Google Pay statement`;
+  $('status').className='status ok';$('status').textContent=`Parsed ${transactions.length} transactions successfully from ${file.name}.`;
+  $('search').value='';$('type').value='all';draw();
+ }catch(err){$('status').className='status error';$('status').textContent=err.message;transactions=[];$('csv').disabled=true;}
+});
+['search','type','category'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',renderRows));
+$('reset').onclick=()=>{$('search').value='';$('type').value='all';$('category').value='all';renderRows()};
+$('csv').onclick=()=>{
+ const data=[['Date','Time','Merchant','Type','Category','Amount','UPI ID'],...transactions.map(x=>[x.date,x.time,x.merchant,x.type,x.category,x.amount,x.upi])];
+ const csv=data.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const a=document.createElement('a'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.href=url;a.download=`gpay-${year}-${monthLabel.toLowerCase()}-transactions.csv`;a.click();URL.revokeObjectURL(url);
+};
+</script>
+</body></html>
